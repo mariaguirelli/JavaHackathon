@@ -55,19 +55,19 @@ public class AgenteForm extends JFrame {
         botaoSalvar = new JButton("Salvar");
         botaoSalvar.addActionListener(e -> executarAcaoDoBotao());
         constraints.gridx = 1;
-        constraints.gridy = 6;
+        constraints.gridy = 2;
         painelEntrada.add(botaoSalvar, constraints);
 
         botaoCancelar = new JButton("Cancelar");
         botaoCancelar.addActionListener(e -> limparCampos());
         constraints.gridx = 0;
-        constraints.gridy = 6;
+        constraints.gridy = 2;
         painelEntrada.add(botaoCancelar, constraints);
 
         botaoDeletar = new JButton("Deletar");
-        botaoDeletar.addActionListener(e -> deletarDiretor());
+        botaoDeletar.addActionListener(e -> deletarAgente());
         constraints.gridx = 2;
-        constraints.gridy = 6;
+        constraints.gridy = 2;
         painelEntrada.add(botaoDeletar, constraints);
 
         JPanel painelSaida = new JPanel(new BorderLayout());
@@ -136,7 +136,7 @@ public class AgenteForm extends JFrame {
         }
     }
 
-    private void deletarDiretor() {
+    private void deletarAgente() {
         service.deletar((int) Long.parseLong(campoId.getText()));
         limparCampos();
         tabelaAgente.setModel(carregarDadosAgentes());

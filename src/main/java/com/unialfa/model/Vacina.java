@@ -35,7 +35,6 @@ public class Vacina {
     }
 
     public LocalDate getData() {
-
         return data;
     }
 
