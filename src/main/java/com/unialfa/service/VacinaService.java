@@ -30,7 +30,7 @@ public class VacinaService {
         }
     }
 
-    public List<Vacina> listarAgentes() {
+    public List<Vacina> listarVacinas() {
         try {
             var dao = new VacinaDao();
             return dao.listarTodos();
