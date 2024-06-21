@@ -6,13 +6,14 @@ import com.unialfa.service.VacinaService;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.MaskFormatter;
 import java.awt.*;
-import java.sql.Date;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
-public class VacinaForm {
+public class VacinaForm extends JFrame{
     private VacinaService service;
     private JLabel labelId;
     private JTextField campoId;
@@ -24,13 +25,14 @@ public class VacinaForm {
     private JButton botaoCancelar;
     private JButton botaoDeletar;
     private JTable tabelaVacina;
+    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyy");
 
     public VacinaForm() {
         service = new VacinaService();
 
         setTitle("Vacina");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 400);
+        setSize(500, 400);
 
         JPanel painelEntrada = new JPanel(new GridBagLayout());
         GridBagConstraints constraints = new GridBagConstraints();
@@ -42,7 +44,6 @@ public class VacinaForm {
         painelEntrada.add(labelId, constraints);
 
         campoId = new JTextField(15);
-        campoDataInicioCampanha
         campoId.setEnabled(false);
         constraints.gridx = 1;
         constraints.gridy = 0;
@@ -54,7 +55,7 @@ public class VacinaForm {
         painelEntrada.add(labelNomeVacina, constraints);
 
         campoNomeVacina = new JTextField(15);
-        campoNomeVacina.setEnabled(false);
+        campoNomeVacina.setEnabled(true);
         constraints.gridx = 1;
         constraints.gridy = 1;
         painelEntrada.add(campoNomeVacina, constraints);
@@ -64,11 +65,17 @@ public class VacinaForm {
         constraints.gridy = 2;
         painelEntrada.add(labelDataInicioCampanha, constraints);
 
-        campoDataInicioCampanha = new JTextField(15);
-        campoDataInicioCampanha.setEnabled(false);
-        constraints.gridx = 1;
-        constraints.gridy = 2;
-        painelEntrada.add(campoDataInicioCampanha, constraints);
+        try {
+            MaskFormatter dateMask = new MaskFormatter("##/##/####");
+            dateMask.setPlaceholderCharacter('_');
+            campoDataInicioCampanha = new JFormattedTextField(dateMask);
+            campoDataInicioCampanha.setColumns(15);
+            constraints.gridx = 1;
+            constraints.gridy = 2;
+            painelEntrada.add(campoDataInicioCampanha, constraints);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
         botaoSalvar = new JButton("Salvar");
         botaoSalvar.addActionListener(e -> executarAcaoDoBotao());
@@ -112,8 +119,9 @@ public class VacinaForm {
                 campoId.setText(id.toString());
                 var nome = (String) tabelaVacina.getValueAt(selectedRow, 1);
                 campoNomeVacina.setText(nome);
-                var dataInicioCampanha = (LocalDate) tabelaVacina.getValueAt(selectedRow, 3);
-                campoNomeVacina.setText(nome);
+                String dataInicioCampanhaStr = (String) tabelaVacina.getValueAt(selectedRow, 2);
+                LocalDate dataInicioCampanha = LocalDate.parse(dataInicioCampanhaStr, dateFormatter);
+                campoDataInicioCampanha.setText(dataInicioCampanhaStr);
             }
         }
     }
@@ -125,9 +133,10 @@ public class VacinaForm {
     }
 
     private Vacina construirVacina() throws Exception {
+        LocalDate dataInicioCampanha = converterData(campoDataInicioCampanha.getText());
         return campoId.getText().isEmpty()
-                ? new Vacina(campoNomeVacina.getText(), campoDataInicioCampanha.getText())
-                : new Vacina(Long.parseLong(campoId.getText()), campoNomeVacina.getText(), campoDataInicioCampanha.getText());
+                ? new Vacina(dataInicioCampanha, campoNomeVacina.getText())
+                : new Vacina(Long.parseLong(campoId.getText()), campoNomeVacina.getText(), dataInicioCampanha);
     }
 
     private DefaultTableModel carregarDadosVacinas() {
@@ -137,11 +146,12 @@ public class VacinaForm {
         model.addColumn("Nome");
         model.addColumn("Data Campanha");
 
-        service.listarVacinas().forEach(vacina ->
-                model.addRow(new Object[]{
-                        vacina.getId(), vacina.getNome(), vacina.getData()
-                })
-        );
+        service.listarVacinas().forEach(vacina -> {
+            String dataFormatada = vacina.getData().format(dateFormatter);
+            model.addRow(new Object[]{
+                    vacina.getId(), vacina.getNome(), dataFormatada
+            });
+        });
         return model;
     }
 
@@ -161,8 +171,14 @@ public class VacinaForm {
         tabelaVacina.setModel(carregarDadosVacinas());
     }
 
-    private Date converterData (String data) throws ParseException {
-        SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
-        return formatter.parse(data);
+    private LocalDate converterData(String data) throws DateTimeParseException {
+        return LocalDate.parse(data, dateFormatter);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            VacinaForm form = new VacinaForm();
+            form.setVisible(true);
+        });
     }
 }
